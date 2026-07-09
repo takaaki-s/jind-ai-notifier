@@ -243,7 +243,7 @@ render_row() {
 }
 
 wait_key() {
-  printf '%s' "${1:-press any key to close}"
+  printf 'press any key to close'
   read -n1 -s -r || true
   printf '\n'
 }
