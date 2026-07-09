@@ -1,0 +1,5 @@
+# vendored test framework (cloned by CI / developers, not committed)
+test/lib/
+
+# local verification evidence
+tmp/

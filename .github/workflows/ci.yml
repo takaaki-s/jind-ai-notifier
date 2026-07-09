@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: shellcheck
+        run: shellcheck notifier.sh test/stubs/jin
+
+      - name: vendor bats-core
+        run: git clone --depth 1 https://github.com/bats-core/bats-core.git test/lib/bats-core
+
+      - name: bats
+        run: test/lib/bats-core/bin/bats test

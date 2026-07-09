@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# Test stub for the `jin` binary, injected via JIN_BIN.
+#
+# Every invocation is appended to $STUB_LOG (one line, the argument list) so
+# tests can assert which subcommands ran. Responses are driven by environment
+# variables:
+#
+#   STUB_INFO_FAIL   space-separated session IDs that `session info` treats as
+#                    dead (non-zero exit); any other ID prints a tabwriter-style
+#                    `Description:`/`ID:`/`Status:` block.
+#   STUB_DESC        Description value emitted by `session info` (default:
+#                    "Session <id>").
+#   STUB_OUTPUT      body printed by `session output` (default placeholder).
+#                    Set-but-empty is honored; only an unset value uses the
+#                    default.
+#   STUB_OUTPUT_FAIL =1 makes `session output` exit non-zero.
+#   STUB_FOCUS_FAIL  =1 makes `session focus` exit non-zero.
+#
+# Any other subcommand is a no-op success, mirroring jin's broad surface.
+
+set -u
+
+if [ -n "${STUB_LOG:-}" ]; then
+  printf '%s\n' "$*" >>"$STUB_LOG"
+fi
+
+case "${1:-} ${2:-}" in
+  "session info")
+    id="${3:-}"
+    case " ${STUB_INFO_FAIL:-} " in
+      *" $id "*)
+        echo "no session matches selector: $id" >&2
+        exit 1
+        ;;
+    esac
+    printf 'Description:  %s\n' "${STUB_DESC:-Session $id}"
+    printf 'ID:           %s\n' "$id"
+    printf 'Status:       idle\n'
+    ;;
+  "session output")
+    if [ "${STUB_OUTPUT_FAIL:-0}" = "1" ]; then
+      echo "session has no agent session ID" >&2
+      exit 1
+    fi
+    printf '%s' "${STUB_OUTPUT-the last assistant reply}"
+    ;;
+  "session focus")
+    if [ "${STUB_FOCUS_FAIL:-0}" = "1" ]; then
+      echo "no active TUI to focus" >&2
+      exit 1
+    fi
+    printf 'Focused session: %s\n' "${3:-}"
+    ;;
+  *)
+    exit 0
+    ;;
+esac

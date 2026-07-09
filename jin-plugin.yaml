@@ -1,0 +1,18 @@
+# Manifest for the notifier plugin. `name` decides the directory jindaiko
+# installs this plugin under (and the `jin plugin run <name>` verb) — it is
+# deliberately shorter than the repository name.
+name: notifier
+api_version: 1
+
+# Subscribe to every status transition and filter inside the script: the
+# interesting axis is JIN_NOTIFY_KIND (task-complete / permission), which
+# matchers cannot express. Action runs (`jin plugin run notifier`) bypass
+# matchers entirely.
+on: ["status_changed"]
+
+run: ./notifier.sh
+
+# `notify-send -A` blocks until the desktop notification is clicked or closed,
+# which routinely exceeds the 30s default. A run SIGTERM'd at 90s only loses
+# the click-to-focus convenience — the stock file was already updated.
+timeout: 90s
