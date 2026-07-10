@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# jindaiko-notifier — per-session "latest notification" stock for jindaiko (jin).
+# jind-ai-notifier — per-session "latest notification" stock for jind-ai (jin).
 #
-# This plugin doubles as the official example for jindaiko's plugin mechanism.
+# This plugin doubles as the official example for jind-ai's plugin mechanism.
 # One file, three modes:
 #
 #   1. Event listener (JIN_EVENT=status_changed) — keeps at most one pending
@@ -31,7 +31,7 @@ JIN="${JIN_BIN:-jin}"
 # popup inner process *does* inherit the user's real environment, which may
 # disagree — that is why mode_action passes the resolved stock path explicitly
 # and mode_list overrides STOCK with it.
-STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/jindaiko-notifier"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/jind-ai-notifier"
 STOCK="$STATE_DIR/stock.tsv"
 LOCK_WAIT=5
 

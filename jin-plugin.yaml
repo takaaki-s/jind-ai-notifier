@@ -1,4 +1,4 @@
-# Manifest for the notifier plugin. `name` decides the directory jindaiko
+# Manifest for the notifier plugin. `name` decides the directory jind-ai
 # installs this plugin under (and the `jin plugin run <name>` verb) — it is
 # deliberately shorter than the repository name.
 name: notifier

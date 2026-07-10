@@ -1,9 +1,9 @@
 **English** | [日本語](README.ja.md)
 
-# jindaiko-notifier
+# jind-ai-notifier
 
-A notification plugin for [jindaiko](https://github.com/takaaki-s/jindaiko)
-(`jin`). It also doubles as the official example for jindaiko's plugin
+A notification plugin for [jind-ai](https://github.com/takaaki-s/jind-ai)
+(`jin`). It also doubles as the official example for jind-ai's plugin
 mechanism — one manifest, one shell script, no build step.
 
 ## What it does
@@ -23,8 +23,8 @@ mechanism — one manifest, one shell script, no build step.
 
 ## Requirements
 
-- **jin (jindaiko)** — `main` including the v1.x plugin extensions from
-  [PR #63](https://github.com/takaaki-s/jindaiko/pull/63), i.e. the next
+- **jin (jind-ai)** — `main` including the v1.x plugin extensions from
+  [PR #63](https://github.com/takaaki-s/jind-ai/pull/63), i.e. the next
   release or newer. The plugin relies on `jin pane popup --here`,
   `jin session focus`, and the `JIN_NOTIFY_KIND` / caller-tmux environment.
 - **bash 4+**
@@ -45,10 +45,10 @@ Optional:
 ## Install
 
 ```bash
-jin plugin install github.com/takaaki-s/jindaiko-notifier
+jin plugin install github.com/takaaki-s/jind-ai-notifier
 ```
 
-jindaiko installs the plugin under the directory named by the manifest's
+jind-ai installs the plugin under the directory named by the manifest's
 `name:` field — **`notifier`, not the repository name** — and that same name is
 the verb you pass to `jin plugin run`. So every command below uses `notifier`,
 e.g. `jin plugin run notifier`.
@@ -91,7 +91,7 @@ the popup.
 The stock lives at:
 
 ```
-~/.local/state/jindaiko-notifier/stock.tsv
+~/.local/state/jind-ai-notifier/stock.tsv
 ```
 
 (The path is fixed: plugin processes run with an allowlisted environment that
@@ -99,18 +99,18 @@ strips `XDG_STATE_HOME`.) It is a plain TSV, one line per session. To clear
 everything, just remove it — the plugin recreates it on the next event:
 
 ```bash
-rm ~/.local/state/jindaiko-notifier/stock.tsv
+rm ~/.local/state/jind-ai-notifier/stock.tsv
 ```
 
 ## Known issues
 
-- jindaiko's **built-in** desktop notifications still fire, so each
+- jind-ai's **built-in** desktop notifications still fire, so each
   notification appears twice. The built-in notifier is slated for removal; this
   plugin does not try to suppress it.
 
 ## As a plugin example
 
-This repository is the reference example for jindaiko's plugin mechanism.
+This repository is the reference example for jind-ai's plugin mechanism.
 Everything lives in [`notifier.sh`](notifier.sh); a few conventions worth
 copying into your own plugin:
 

@@ -19,7 +19,7 @@ setup() {
   STUB_DIR="$BATS_TEST_DIRNAME/stubs"
   STUB="$STUB_DIR/jin"
   STATE_HOME="$BATS_TEST_TMPDIR/state"
-  STOCK="$STATE_HOME/jindaiko-notifier/stock.tsv"
+  STOCK="$STATE_HOME/jind-ai-notifier/stock.tsv"
   STUB_LOG="$BATS_TEST_TMPDIR/stub.log"
   SAFE_PATH="$STUB_DIR:/usr/bin:/bin"
 }
@@ -191,7 +191,7 @@ field() { awk -F'\t' -v n="$1" 'NR==1{print $n}' "$STOCK"; }
 @test "V-015: a held lock fails open after ~5s without touching the stock" {
   seed_stock $'existing\tpermission\t100\tExisting\t'
   before=$(cat "$STOCK")
-  lock="$STATE_HOME/jindaiko-notifier/stock.lock"
+  lock="$STATE_HOME/jind-ai-notifier/stock.lock"
   ready="$BATS_TEST_TMPDIR/lock-ready"
 
   flock "$lock" -c "touch '$ready'; sleep 8" &
