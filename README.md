@@ -86,6 +86,28 @@ Dead sessions (killed or deleted) are pruned from the list when it opens.
 Clicking a desktop notification focuses that session directly, without opening
 the popup.
 
+## Customization
+
+### Popup size
+
+The plugin ships with `popup: { width: 70, height: 60 }` declared in
+`jin-plugin.yaml` — the popup fills 70% × 60% of the terminal by default.
+To use a different size, override it in your `jin` config under
+`popups.plugins.notifier` (percentages of the terminal, 1–100 each):
+
+```yaml
+# ~/.config/jind-ai/config.yaml
+popups:
+  plugins:
+    notifier:
+      width: 80
+      height: 50
+```
+
+User config wins over the manifest default. See jin's [Popup Sizes
+guide](https://github.com/takaaki-s/jind-ai/blob/main/docs/tui-guide.md#popup-sizes)
+for the full resolution chain.
+
 ## State / files
 
 The stock lives at:

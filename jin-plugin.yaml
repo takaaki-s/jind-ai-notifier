@@ -16,3 +16,11 @@ run: ./notifier.sh
 # which routinely exceeds the 30s default. A run SIGTERM'd at 90s only loses
 # the click-to-focus convenience — the stock file was already updated.
 timeout: 90s
+
+# Preferred popup size as percentages of the terminal (1-100 each). The list
+# of pending sessions is short and reads well in a 70x60 area; users can
+# override this in their jin config under `popups.plugins.notifier` — see
+# the Customization section in README.md.
+popup:
+  width: 70
+  height: 60
