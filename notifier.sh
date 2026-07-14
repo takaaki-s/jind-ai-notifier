@@ -8,7 +8,7 @@
 #      notification per session (task-complete / permission), drops the entry
 #      when the session transitions to "thinking" (someone is attending it),
 #      and fires a desktop notification whose click focuses the session.
-#   2. Action (JIN_EVENT=action, from `jin plugin run notifier`) — opens a tmux
+#   2. Action (JIN_EVENT=action, from `jin plugin run jind-ai-notifier`) — opens a tmux
 #      popup over the caller's own pane listing sessions with pending
 #      notifications; picking one focuses it and consumes the entry.
 #   3. Inner list UI (`notifier.sh --list <stock-file>`) — what runs inside the

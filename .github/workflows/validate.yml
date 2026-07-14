@@ -1,0 +1,31 @@
+name: validate
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.local/bin/jin
+          key: jin-v0.7.1-linux-amd64
+
+      - name: install jin
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -x ~/.local/bin/jin ]; then
+            mkdir -p ~/.local/bin
+            curl -fsSL https://github.com/takaaki-s/jind-ai/releases/download/v0.7.1/jind-ai_0.7.1_linux_amd64.tar.gz \
+              | tar -xzC ~/.local/bin jin
+          fi
+
+      - name: jin plugin validate
+        shell: bash
+        run: ~/.local/bin/jin plugin validate --github-actions

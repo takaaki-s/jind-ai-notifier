@@ -44,14 +44,22 @@ Optional:
 
 ## Install
 
+From the jin plugin registry (SHA-pinned via the registry entry):
+
+```bash
+jin plugin install jind-ai-notifier
+```
+
+Or from the git URL directly:
+
 ```bash
 jin plugin install github.com/takaaki-s/jind-ai-notifier
 ```
 
-jind-ai installs the plugin under the directory named by the manifest's
-`name:` field — **`notifier`, not the repository name** — and that same name is
-the verb you pass to `jin plugin run`. So every command below uses `notifier`,
-e.g. `jin plugin run notifier`.
+Either path installs the plugin under the directory named by the manifest's
+`name:` field — `jind-ai-notifier` — and that same name is the verb you pass
+to `jin plugin run`. So every command below uses `jind-ai-notifier`, e.g.
+`jin plugin run jind-ai-notifier`.
 
 For development, symlink a local checkout in place instead:
 
@@ -64,7 +72,7 @@ jin plugin install --link .
 Bind a key in your everyday (outer) tmux to open the list:
 
 ```tmux
-bind-key N run-shell "jin plugin run notifier"
+bind-key N run-shell "jin plugin run jind-ai-notifier"
 ```
 
 Popup controls:
@@ -91,15 +99,15 @@ the popup.
 ### Popup size
 
 The plugin ships with `popup: { width: 70, height: 60 }` declared in
-`jin-plugin.yaml` — the popup fills 70% × 60% of the terminal by default.
+`jind-ai-plugin.yaml` — the popup fills 70% × 60% of the terminal by default.
 To use a different size, override it in your `jin` config under
-`popups.plugins.notifier` (percentages of the terminal, 1–100 each):
+`popups.plugins.jind-ai-notifier` (percentages of the terminal, 1–100 each):
 
 ```yaml
 # ~/.config/jind-ai/config.yaml
 popups:
   plugins:
-    notifier:
+    jind-ai-notifier:
       width: 80
       height: 50
 ```
