@@ -22,10 +22,9 @@
 
 ## 必要要件
 
-- **jin（jind-ai）** — [PR #95](https://github.com/takaaki-s/jind-ai/pull/95)
-  のプラグイン別 keybinding 機能（merge SHA `9c7caa2`）を含む `main`、すなわ
-  ちそのコミット以降のリリース。本プラグインは `jin pane popup --here`、
-  `jin session focus`、`JIN_NOTIFY_KIND` / caller-tmux 環境変数に依存します。
+- **jin（jind-ai）** — 本プラグインはプラグイン別 keybinding、
+  `jin pane popup --here`、`jin session focus`、`JIN_NOTIFY_KIND` /
+  caller-tmux 環境変数に依存します。
 - **bash 4+**
 - **flock**（util-linux） — ストックファイルへの書き込みを直列化します。コマンドが
   存在しない環境（素の macOS 等）でも動作しますが、ロックなしで更新し stderr に警告を
