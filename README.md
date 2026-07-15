@@ -27,6 +27,10 @@ mechanism — one manifest, one shell script, no build step.
   [PR #63](https://github.com/takaaki-s/jind-ai/pull/63), i.e. the next
   release or newer. The plugin relies on `jin pane popup --here`,
   `jin session focus`, and the `JIN_NOTIFY_KIND` / caller-tmux environment.
+  The primary shortcut path in [Usage](#usage) also requires the per-plugin
+  keybinding support from [PR #95](https://github.com/takaaki-s/jind-ai/pull/95)
+  (merge SHA `9c7caa2`, in the release following that commit or later); the
+  legacy tmux setup works on any jin build with the plugin extensions above.
 - **bash 4+**
 - **flock** (util-linux) — serializes writes to the stock file. Where the
   command is missing (stock macOS), the plugin still works but updates the
@@ -69,11 +73,20 @@ jin plugin install --link .
 
 ## Usage
 
-Bind a key in your everyday (outer) tmux to open the list:
+Declare the shortcut in your `jin` config so `jin ui` wires it up for you:
 
-```tmux
-bind-key N run-shell "jin plugin run jind-ai-notifier"
+```yaml
+# ~/.config/jind-ai/config.yaml
+keybindings:
+  plugins:
+    jind-ai-notifier:
+      keys: ["M-n"]
 ```
+
+Restart `jin ui` and press **Alt+N** (`M-n`) to open the popup. Because `jin`
+registers this as an outer tmux **root** binding, it fires regardless of which
+pane currently has focus — the TUI, an agent pane, or anywhere else inside the
+`jin ui` session.
 
 Popup controls:
 
@@ -93,6 +106,22 @@ Reading the list — one line per session, newest first:
 Dead sessions (killed or deleted) are pruned from the list when it opens.
 Clicking a desktop notification focuses that session directly, without opening
 the popup.
+
+<details>
+<summary>Legacy tmux-only setup</summary>
+
+Before jin gained per-plugin shortcut bindings (see [Requirements](#requirements)),
+the same effect was achieved by binding the key directly in your everyday
+(outer) tmux config:
+
+```tmux
+bind-key N run-shell "jin plugin run jind-ai-notifier"
+```
+
+Use this if you're on a jin build that predates the native binding, or if you
+prefer to keep the mapping entirely inside your own tmux config.
+
+</details>
 
 ## Customization
 
