@@ -23,10 +23,9 @@ mechanism — one manifest, one shell script, no build step.
 
 ## Requirements
 
-- **jin (jind-ai)** — `main` including the v1.x plugin extensions from
-  [PR #63](https://github.com/takaaki-s/jind-ai/pull/63), i.e. the next
-  release or newer. The plugin relies on `jin pane popup --here`,
-  `jin session focus`, and the `JIN_NOTIFY_KIND` / caller-tmux environment.
+- **jin (jind-ai)** — the plugin relies on per-plugin keybindings,
+  `jin pane popup --here`, `jin session focus`, and the `JIN_NOTIFY_KIND` /
+  caller-tmux environment.
 - **bash 4+**
 - **flock** (util-linux) — serializes writes to the stock file. Where the
   command is missing (stock macOS), the plugin still works but updates the
@@ -69,11 +68,20 @@ jin plugin install --link .
 
 ## Usage
 
-Bind a key in your everyday (outer) tmux to open the list:
+Declare the shortcut in your `jin` config so `jin ui` wires it up for you:
 
-```tmux
-bind-key N run-shell "jin plugin run jind-ai-notifier"
+```yaml
+# ~/.config/jind-ai/config.yaml
+keybindings:
+  plugins:
+    jind-ai-notifier:
+      keys: ["M-n"]
 ```
+
+Restart `jin ui` and press **Alt+N** (`M-n`) to open the popup. Because `jin`
+registers this as an outer tmux **root** binding, it fires regardless of which
+pane currently has focus — the TUI, an agent pane, or anywhere else inside the
+`jin ui` session.
 
 Popup controls:
 
@@ -131,12 +139,6 @@ everything, just remove it — the plugin recreates it on the next event:
 ```bash
 rm ~/.local/state/jind-ai-notifier/stock.tsv
 ```
-
-## Known issues
-
-- jind-ai's **built-in** desktop notifications still fire, so each
-  notification appears twice. The built-in notifier is slated for removal; this
-  plugin does not try to suppress it.
 
 ## As a plugin example
 

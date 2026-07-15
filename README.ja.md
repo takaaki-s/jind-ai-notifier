@@ -22,10 +22,9 @@
 
 ## 必要要件
 
-- **jin（jind-ai）** — [PR #63](https://github.com/takaaki-s/jind-ai/pull/63)
-  の v1.x プラグイン拡張を含む `main`、すなわち次リリース以降。本プラグインは
-  `jin pane popup --here`、`jin session focus`、`JIN_NOTIFY_KIND` / caller-tmux
-  環境変数に依存します。
+- **jin（jind-ai）** — 本プラグインはプラグイン別 keybinding、
+  `jin pane popup --here`、`jin session focus`、`JIN_NOTIFY_KIND` /
+  caller-tmux 環境変数に依存します。
 - **bash 4+**
 - **flock**（util-linux） — ストックファイルへの書き込みを直列化します。コマンドが
   存在しない環境（素の macOS 等）でも動作しますが、ロックなしで更新し stderr に警告を
@@ -68,11 +67,20 @@ jin plugin install --link .
 
 ## 使い方
 
-普段使いの（外側の）tmux にキーバインドを設定して一覧を開きます:
+`jin` の config にショートカットを宣言すると、`jin ui` が自動で登録します:
 
-```tmux
-bind-key N run-shell "jin plugin run jind-ai-notifier"
+```yaml
+# ~/.config/jind-ai/config.yaml
+keybindings:
+  plugins:
+    jind-ai-notifier:
+      keys: ["M-n"]
 ```
+
+`jin ui` を再起動して **Alt+N**（`M-n`）を押すとポップアップが開きます。この
+バインドは外側 tmux の **root** バインディングとして登録されるため、TUI・エー
+ジェントペインなど `jin ui` セッション内のどのペインにフォーカスがあっても発
+火します。
 
 ポップアップの操作:
 
@@ -126,11 +134,6 @@ jin の [Popup Sizes ガイド](https://github.com/takaaki-s/jind-ai/blob/main/d
 ```bash
 rm ~/.local/state/jind-ai-notifier/stock.tsv
 ```
-
-## 既知の事項
-
-- jind-ai の **内蔵** デスクトップ通知も発行されるため、各通知が二重に表示されます。
-  内蔵の通知機能は将来削除予定であり、本プラグイン側では抑制しません。
 
 ## example として
 
