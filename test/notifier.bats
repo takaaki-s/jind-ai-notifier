@@ -2,9 +2,12 @@
 #
 # Tests for notifier.sh. Two techniques are used:
 #
-#   * Listener / action / --list flows run the script as a fresh subprocess
+#   * Listen / list-popup / --list flows run the script as a fresh subprocess
 #     (run_notifier) with JIN_BIN pointed at test/stubs/jin and XDG_STATE_HOME
 #     inside BATS_TEST_TMPDIR — the same contract real plugin processes get.
+#     Each invocation passes the manifest action verb (`listen` for event
+#     dispatch, `--list` for the inner popup UI) as the first argument, exactly
+#     as jin 0.8+ hands off through `actions[].entrypoint`.
 #   * Pure helpers (stock_delete_exact) are exercised by sourcing the script in
 #     an isolated `bash -c` so `set -u` never leaks into the bats shell.
 #
@@ -49,9 +52,9 @@ field() { awk -F'\t' -v n="$1" 'NR==1{print $n}' "$STOCK"; }
 
 @test "V-001: task-complete stocks one 5-field row (id/kind/epoch/name/summary)" {
   run_notifier \
-    JIN_EVENT=status_changed JIN_SESSION_ID=sess-1 \
+    JIN_SESSION_ID=sess-1 \
     JIN_NOTIFY_KIND=task-complete STUB_OUTPUT="the last reply" \
-    "$SCRIPT"
+    "$SCRIPT" listen
   [ "$status" -eq 0 ]
   [ "$(wc -l <"$STOCK")" -eq 1 ]
   [ "$(awk -F'\t' 'NR==1{print NF}' "$STOCK")" -eq 5 ]
@@ -64,8 +67,8 @@ field() { awk -F'\t' -v n="$1" 'NR==1{print $n}' "$STOCK"; }
 
 @test "V-002: permission stocks a row with an empty summary" {
   run_notifier \
-    JIN_EVENT=status_changed JIN_SESSION_ID=sess-2 JIN_NOTIFY_KIND=permission \
-    "$SCRIPT"
+    JIN_SESSION_ID=sess-2 JIN_NOTIFY_KIND=permission \
+    "$SCRIPT" listen
   [ "$status" -eq 0 ]
   [ "$(awk -F'\t' 'NR==1{print NF}' "$STOCK")" -eq 5 ]
   [ "$(field 2)" = "permission" ]
@@ -73,14 +76,14 @@ field() { awk -F'\t' -v n="$1" 'NR==1{print $n}' "$STOCK"; }
 }
 
 @test "V-003: thinking transition consumes only the matching session" {
-  run_notifier JIN_EVENT=status_changed JIN_SESSION_ID=sess-A \
-    JIN_NOTIFY_KIND=task-complete STUB_OUTPUT="A done" "$SCRIPT"
-  run_notifier JIN_EVENT=status_changed JIN_SESSION_ID=sess-B \
-    JIN_NOTIFY_KIND=permission "$SCRIPT"
+  run_notifier JIN_SESSION_ID=sess-A \
+    JIN_NOTIFY_KIND=task-complete STUB_OUTPUT="A done" "$SCRIPT" listen
+  run_notifier JIN_SESSION_ID=sess-B \
+    JIN_NOTIFY_KIND=permission "$SCRIPT" listen
   [ "$(wc -l <"$STOCK")" -eq 2 ]
 
-  run_notifier JIN_EVENT=status_changed JIN_SESSION_ID=sess-A \
-    JIN_STATUS=thinking "$SCRIPT"
+  run_notifier JIN_SESSION_ID=sess-A \
+    JIN_STATUS=thinking "$SCRIPT" listen
   [ "$status" -eq 0 ]
   [ "$(wc -l <"$STOCK")" -eq 1 ]
   ! grep -q $'^sess-A\t' "$STOCK"
@@ -88,10 +91,10 @@ field() { awk -F'\t' -v n="$1" 'NR==1{print $n}' "$STOCK"; }
 }
 
 @test "V-004: repeated events on one session keep only the latest row" {
-  run_notifier JIN_EVENT=status_changed JIN_SESSION_ID=sess-4 \
-    JIN_NOTIFY_KIND=task-complete STUB_OUTPUT="first" "$SCRIPT"
-  run_notifier JIN_EVENT=status_changed JIN_SESSION_ID=sess-4 \
-    JIN_NOTIFY_KIND=permission "$SCRIPT"
+  run_notifier JIN_SESSION_ID=sess-4 \
+    JIN_NOTIFY_KIND=task-complete STUB_OUTPUT="first" "$SCRIPT" listen
+  run_notifier JIN_SESSION_ID=sess-4 \
+    JIN_NOTIFY_KIND=permission "$SCRIPT" listen
   [ "$(wc -l <"$STOCK")" -eq 1 ]
   [ "$(field 2)" = "permission" ]
 }
@@ -149,8 +152,8 @@ field() { awk -F'\t' -v n="$1" 'NR==1{print $n}' "$STOCK"; }
 }
 
 @test "V-010: session output failure falls back to an empty summary, exit 0" {
-  run_notifier JIN_EVENT=status_changed JIN_SESSION_ID=sess-10 \
-    JIN_NOTIFY_KIND=task-complete STUB_OUTPUT_FAIL=1 "$SCRIPT"
+  run_notifier JIN_SESSION_ID=sess-10 \
+    JIN_NOTIFY_KIND=task-complete STUB_OUTPUT_FAIL=1 "$SCRIPT" listen
   [ "$status" -eq 0 ]
   [ "$(wc -l <"$STOCK")" -eq 1 ]
   [ "$(field 2)" = "task-complete" ]
@@ -167,8 +170,8 @@ field() { awk -F'\t' -v n="$1" 'NR==1{print $n}' "$STOCK"; }
 }
 
 @test "V-012: a missing notification command still stocks and exits 0" {
-  run_notifier JIN_EVENT=status_changed JIN_SESSION_ID=sess-12 \
-    JIN_NOTIFY_KIND=task-complete STUB_OUTPUT="hi" "$SCRIPT"
+  run_notifier JIN_SESSION_ID=sess-12 \
+    JIN_NOTIFY_KIND=task-complete STUB_OUTPUT="hi" "$SCRIPT" listen
   [ "$status" -eq 0 ]
   [ "$(wc -l <"$STOCK")" -eq 1 ]
   [[ "$stderr" == *"no desktop notification"* ]]
@@ -199,8 +202,8 @@ field() { awk -F'\t' -v n="$1" 'NR==1{print $n}' "$STOCK"; }
   for _ in $(seq 1 100); do [ -f "$ready" ] && break; sleep 0.05; done
 
   start=$SECONDS
-  run_notifier JIN_EVENT=status_changed JIN_SESSION_ID=late \
-    JIN_NOTIFY_KIND=task-complete STUB_OUTPUT="x" "$SCRIPT"
+  run_notifier JIN_SESSION_ID=late \
+    JIN_NOTIFY_KIND=task-complete STUB_OUTPUT="x" "$SCRIPT" listen
   elapsed=$((SECONDS - start))
 
   kill "$holder" 2>/dev/null || true
@@ -223,8 +226,8 @@ field() { awk -F'\t' -v n="$1" 'NR==1{print $n}' "$STOCK"; }
 
 @test "V-017: control chars, ANSI, and long multibyte text sanitize to one <=120-char field" {
   raw=$'col1\tcol2\n\033[31mred\033[0m'"$(printf 'あ%.0s' $(seq 1 200))"
-  run_notifier JIN_EVENT=status_changed JIN_SESSION_ID=sess-17 \
-    JIN_NOTIFY_KIND=task-complete STUB_OUTPUT="$raw" "$SCRIPT"
+  run_notifier JIN_SESSION_ID=sess-17 \
+    JIN_NOTIFY_KIND=task-complete STUB_OUTPUT="$raw" "$SCRIPT" listen
   [ "$status" -eq 0 ]
   [ "$(wc -l <"$STOCK")" -eq 1 ]
   [ "$(awk -F'\t' 'NR==1{print NF}' "$STOCK")" -eq 5 ]

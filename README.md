@@ -160,16 +160,12 @@ This repository is the reference example for jind-ai's plugin mechanism.
 Everything lives in [`notifier.sh`](notifier.sh); a few conventions worth
 copying into your own plugin:
 
-- **One manifest, two actions, one script.** `jind-ai-plugin.yaml`
-  declares two actions — `list` (user-facing, default) and `listen`
-  (`listener: true`, hidden from the palette) — each pointing at the
-  same script with a different argv verb. `main()` dispatches on argv:
-  `notifier.sh list` runs `mode_action` (open the popup), `notifier.sh
-  listen` runs `mode_listener` (handle a status_changed event). Split
-  entrypoints for split responsibilities without duplicating the shared
-  helpers (locking, stock I/O, sanitising) into a second script. A bare
-  invocation (no argv verb) falls back to `JIN_EVENT`-based dispatch so
-  the script remains testable and debuggable on its own.
+- **Two actions, one script — dispatch on argv.** The user-facing
+  action and the event listener sit side-by-side in `actions[]`, each
+  invoking the same script with a different verb. `main()` is a flat
+  `case` over `$1`, which keeps the shared helpers (locking, stock I/O,
+  sanitising) in one file without splitting into `notify.sh` /
+  `list.sh`. See the Usage table for what each verb does.
 - **Popups don't inherit `JIN_*`.** tmux spawns the popup process fresh, so
   `mode_action` passes everything it needs on the command line: an
   env-assignment prefix (`env JIN_BIN=... JIN_SOCKET=...`) plus `printf '%q '`

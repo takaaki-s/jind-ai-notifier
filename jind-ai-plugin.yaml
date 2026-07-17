@@ -21,11 +21,10 @@ jin: ">=0.8.0"
 install:
   source: {}
 
-# `notify-send -A` blocks until the desktop notification is clicked or closed,
-# which routinely exceeds the 30s default. A run SIGTERM'd at 90s only loses
-# the click-to-focus convenience — the stock file was already updated. This
-# top-level timeout applies to every action; per-action overrides are a
-# follow-up on the jin side.
+# `notify-send -A` (from the `listen` action) blocks until the desktop
+# notification is clicked or closed, which routinely exceeds the 30s
+# default. A run SIGTERM'd at 90s only loses the click-to-focus convenience
+# — the stock file was already updated.
 timeout: 90s
 
 actions:

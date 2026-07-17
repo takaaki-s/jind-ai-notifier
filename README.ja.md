@@ -154,16 +154,12 @@ rm ~/.local/state/jind-ai-notifier/stock.tsv
 [`notifier.sh`](notifier.sh) に収まっています。自分のプラグインに取り入れる価値のあ
 る作法をいくつか挙げます:
 
-- **1 マニフェスト、2 action、1 スクリプト。** `jind-ai-plugin.yaml` は
-  `list`（ユーザー向け・default）と `listen`（`listener: true`・パレット
-  非表示）の 2 つの action を宣言し、それぞれが同じスクリプトを別 argv
-  動詞で呼び出します。`main()` は argv で分岐: `notifier.sh list` は
-  `mode_action`（ポップアップを開く）、`notifier.sh listen` は
-  `mode_listener`（`status_changed` イベントを処理）を実行します。
-  責務は分けつつ、共通ヘルパー（ロック / ストック I/O / サニタイズ）を
-  2 本目のスクリプトに複製せずに済みます。argv なしで起動された場合は
-  `JIN_EVENT` フォールバック dispatch が入るため、単体でのテスト・
-  デバッグも維持できます。
+- **2 action、1 スクリプト — argv で dispatch。** ユーザー向け action と
+  event listener を `actions[]` に並べ、同じスクリプトを別 argv 動詞で
+  呼び出します。`main()` は `$1` に対する平坦な `case` になり、共通
+  ヘルパー（ロック / ストック I/O / サニタイズ）を `notify.sh` /
+  `list.sh` に分割せずに 1 ファイルに集約できます。動詞ごとの動作は
+  「使い方」の表を参照。
 - **ポップアップは `JIN_*` を継承しない。** tmux はポップアッププロセスを新規に起動
   するため、`mode_action` は必要な値をすべてコマンドラインで渡します: env 代入プレ
   フィックス（`env JIN_BIN=... JIN_SOCKET=...`）と、内側コマンド全体を **単一トーク

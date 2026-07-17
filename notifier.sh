@@ -25,8 +25,8 @@
 #     — log to stderr and exit 0. No notification is worth blocking a
 #     session's status pipeline.
 #   - Split event listeners from user-facing actions in the manifest
-#     (`listener: true`). One script can still handle both — just dispatch
-#     on argv, as this main() does.
+#     (`listener: true`) and dispatch on argv. One script can still handle
+#     both roles cheaply — main() is a flat case over the verb.
 
 set -u
 
@@ -354,22 +354,12 @@ main() {
     mode_list "$@"
     return
   fi
-  # Manifest v2 actions[] pass one of the action verbs as argv[1]. When
-  # invoked bare (dev shells, tests, or an older jin binary that predates
-  # schema v2 and used this script as a raw entrypoint), fall back to a
-  # JIN_EVENT-based dispatch so the same script still does something
-  # meaningful.
+  # Manifest v2 actions[] pass one of the action verbs as argv[1]. The manifest
+  # pins `jin: ">=0.8.0"`, so every real dispatch path lands here with a verb.
   case "${1:-}" in
     list)   mode_action ;;
     listen) mode_listener ;;
-    "")
-      case "${JIN_EVENT:-}" in
-        status_changed) mode_listener ;;
-        action)         mode_action ;;
-        *)              return 0 ;;
-      esac
-      ;;
-    *) return 0 ;; # unknown verbs: ignore (compat contract)
+    *)      return 0 ;; # unknown verbs: ignore (compat contract)
   esac
 }
 
