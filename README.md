@@ -23,9 +23,11 @@ mechanism — one manifest, one shell script, no build step.
 
 ## Requirements
 
-- **jin (jind-ai)** — the plugin relies on per-plugin keybindings,
-  `jin pane popup --here`, `jin session focus`, and the `JIN_NOTIFY_KIND` /
-  caller-tmux environment.
+- **jin (jind-ai)** — the manifest is `schema_version: 2` and uses
+  `actions[].listener` to hide the internal event listener from the
+  palette; the plugin also relies on `jin pane popup --here`,
+  `jin session focus`, and the `JIN_NOTIFY_KIND` / caller-tmux
+  environment.
 - **bash 4+**
 - **flock** (util-linux) — serializes writes to the stock file. Where the
   command is missing (stock macOS), the plugin still works but updates the
@@ -68,20 +70,32 @@ jin plugin install --link .
 
 ## Usage
 
-Declare the shortcut in your `jin` config so `jin ui` wires it up for you:
+The plugin declares two actions in its manifest:
+
+| Action | Fires | What it does |
+|--------|-------|--------------|
+| `list` (default) | manual (`jin plugin run jind-ai-notifier` / palette / keybinding) | opens the pending-sessions popup |
+| `listen` | `status_changed` events (automatic; `listener: true`, hidden from the palette) | maintains the stock file and fires the desktop notification |
+
+You get the desktop notifications automatically once the plugin is
+installed and enabled — the `listen` action wires itself to every session
+status change. To open the popup, declare a shortcut in your `jin` config
+so `jin ui` wires it up:
 
 ```yaml
 # ~/.config/jind-ai/config.yaml
 keybindings:
   plugins:
     jind-ai-notifier:
-      keys: ["M-n"]
+      actions:
+        list:
+          keys: ["M-n"]
 ```
 
-Restart `jin ui` and press **Alt+N** (`M-n`) to open the popup. Because `jin`
-registers this as an outer tmux **root** binding, it fires regardless of which
-pane currently has focus — the TUI, an agent pane, or anywhere else inside the
-`jin ui` session.
+Restart `jin ui` and press **Alt+N** (`M-n`) to open the popup. Because
+`jin` registers this as an outer tmux **root** binding, it fires
+regardless of which pane currently has focus — the TUI, an agent pane,
+or anywhere else inside the `jin ui` session.
 
 Popup controls:
 
@@ -146,9 +160,12 @@ This repository is the reference example for jind-ai's plugin mechanism.
 Everything lives in [`notifier.sh`](notifier.sh); a few conventions worth
 copying into your own plugin:
 
-- **One manifest, two trigger paths.** `main()` dispatches on `JIN_EVENT`:
-  `status_changed` runs the event listener (`mode_listener`), and `action`
-  (from `jin plugin run`) opens the popup (`mode_action`). No second script.
+- **Two actions, one script — dispatch on argv.** The user-facing
+  action and the event listener sit side-by-side in `actions[]`, each
+  invoking the same script with a different verb. `main()` is a flat
+  `case` over `$1`, which keeps the shared helpers (locking, stock I/O,
+  sanitising) in one file without splitting into `notify.sh` /
+  `list.sh`. See the Usage table for what each verb does.
 - **Popups don't inherit `JIN_*`.** tmux spawns the popup process fresh, so
   `mode_action` passes everything it needs on the command line: an
   env-assignment prefix (`env JIN_BIN=... JIN_SOCKET=...`) plus `printf '%q '`

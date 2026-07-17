@@ -22,9 +22,10 @@
 
 ## 必要要件
 
-- **jin（jind-ai）** — 本プラグインはプラグイン別 keybinding、
-  `jin pane popup --here`、`jin session focus`、`JIN_NOTIFY_KIND` /
-  caller-tmux 環境変数に依存します。
+- **jin（jind-ai）** — マニフェストは `schema_version: 2` で、内部
+  イベントリスナーをパレットから隠すために `actions[].listener` を利用
+  します。加えて `jin pane popup --here`、`jin session focus`、
+  `JIN_NOTIFY_KIND` / caller-tmux 環境変数に依存します。
 - **bash 4+**
 - **flock**（util-linux） — ストックファイルへの書き込みを直列化します。コマンドが
   存在しない環境（素の macOS 等）でも動作しますが、ロックなしで更新し stderr に警告を
@@ -67,20 +68,32 @@ jin plugin install --link .
 
 ## 使い方
 
-`jin` の config にショートカットを宣言すると、`jin ui` が自動で登録します:
+このプラグインはマニフェストで 2 つの action を宣言しています:
+
+| Action | 発火契機 | 動作 |
+|--------|----------|------|
+| `list` (default) | 手動 (`jin plugin run jind-ai-notifier` / パレット / キーバインド) | 未対応セッション一覧のポップアップを開く |
+| `listen` | `status_changed` イベント（自動、`listener: true` でパレット非表示） | ストックファイルの更新とデスクトップ通知の発行 |
+
+インストール後、プラグインが有効なら `listen` action が自動的にセッション
+のステータス変化を購読し、デスクトップ通知は自動で出ます。ポップアップを
+開くには `jin` の config にショートカットを宣言してください（`jin ui` が
+自動で登録します）:
 
 ```yaml
 # ~/.config/jind-ai/config.yaml
 keybindings:
   plugins:
     jind-ai-notifier:
-      keys: ["M-n"]
+      actions:
+        list:
+          keys: ["M-n"]
 ```
 
-`jin ui` を再起動して **Alt+N**（`M-n`）を押すとポップアップが開きます。この
-バインドは外側 tmux の **root** バインディングとして登録されるため、TUI・エー
-ジェントペインなど `jin ui` セッション内のどのペインにフォーカスがあっても発
-火します。
+`jin ui` を再起動して **Alt+N**（`M-n`）を押すとポップアップが開きます。
+このバインドは外側 tmux の **root** バインディングとして登録されるため、
+TUI・エージェントペインなど `jin ui` セッション内のどのペインにフォーカス
+があっても発火します。
 
 ポップアップの操作:
 
@@ -141,10 +154,12 @@ rm ~/.local/state/jind-ai-notifier/stock.tsv
 [`notifier.sh`](notifier.sh) に収まっています。自分のプラグインに取り入れる価値のあ
 る作法をいくつか挙げます:
 
-- **1 マニフェストで 2 系統のトリガー。** `main()` が `JIN_EVENT` で分岐します:
-  `status_changed` はイベントリスナー（`mode_listener`）を、`action`（`jin plugin
-  run` 由来）はポップアップ（`mode_action`）を実行します。2 本目のスクリプトはあり
-  ません。
+- **2 action、1 スクリプト — argv で dispatch。** ユーザー向け action と
+  event listener を `actions[]` に並べ、同じスクリプトを別 argv 動詞で
+  呼び出します。`main()` は `$1` に対する平坦な `case` になり、共通
+  ヘルパー（ロック / ストック I/O / サニタイズ）を `notify.sh` /
+  `list.sh` に分割せずに 1 ファイルに集約できます。動詞ごとの動作は
+  「使い方」の表を参照。
 - **ポップアップは `JIN_*` を継承しない。** tmux はポップアッププロセスを新規に起動
   するため、`mode_action` は必要な値をすべてコマンドラインで渡します: env 代入プレ
   フィックス（`env JIN_BIN=... JIN_SOCKET=...`）と、内側コマンド全体を **単一トーク

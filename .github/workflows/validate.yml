@@ -5,27 +5,34 @@ on:
   pull_request:
   workflow_dispatch:
 
+# The manifest uses features (schema_version: 2, actions[].listener) that
+# haven't landed in a jin release yet, so validate against a specific commit
+# of jin's main. Bumping JIN_COMMIT invalidates the cache and reinstalls.
+env:
+  JIN_COMMIT: eb2a19d0a9a43c5939571422cd848c198386f939  # jin main tip incl. PR #103
+
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
-      - uses: actions/cache@v4
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
         with:
-          path: ~/.local/bin/jin
-          key: jin-v0.7.1-linux-amd64
+          go-version: stable
+
+      - name: cache jin binary
+        id: cache-jin
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/go/bin/jin
+          key: jin-bin-${{ runner.os }}-${{ env.JIN_COMMIT }}
 
       - name: install jin
+        if: steps.cache-jin.outputs.cache-hit != 'true'
         shell: bash
-        run: |
-          set -euo pipefail
-          if [ ! -x ~/.local/bin/jin ]; then
-            mkdir -p ~/.local/bin
-            curl -fsSL https://github.com/takaaki-s/jind-ai/releases/download/v0.7.1/jind-ai_0.7.1_linux_amd64.tar.gz \
-              | tar -xzC ~/.local/bin jin
-          fi
+        run: go install "github.com/takaaki-s/jind-ai/cmd/jin@${JIN_COMMIT}"
 
       - name: jin plugin validate
         shell: bash
-        run: ~/.local/bin/jin plugin validate --github-actions
+        run: ~/go/bin/jin plugin validate --github-actions
