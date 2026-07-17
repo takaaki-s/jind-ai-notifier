@@ -11,21 +11,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/cache@v4
+      - uses: actions/setup-go@v5
         with:
-          path: ~/.local/bin/jin
-          key: jin-v0.7.1-linux-amd64
+          go-version: stable
 
+      # The manifest uses features (schema_version: 2, actions[].listener)
+      # that only landed in jin's main after 0.7.1, so build the CLI from
+      # source rather than pinning to a shipped release.
       - name: install jin
         shell: bash
-        run: |
-          set -euo pipefail
-          if [ ! -x ~/.local/bin/jin ]; then
-            mkdir -p ~/.local/bin
-            curl -fsSL https://github.com/takaaki-s/jind-ai/releases/download/v0.7.1/jind-ai_0.7.1_linux_amd64.tar.gz \
-              | tar -xzC ~/.local/bin jin
-          fi
+        run: go install github.com/takaaki-s/jind-ai/cmd/jin@main
 
       - name: jin plugin validate
         shell: bash
-        run: ~/.local/bin/jin plugin validate --github-actions
+        run: jin plugin validate --github-actions

@@ -2,17 +2,20 @@
 # jind-ai-notifier — per-session "latest notification" stock for jind-ai (jin).
 #
 # This plugin doubles as the official example for jind-ai's plugin mechanism.
-# One file, three modes:
+# One file, three verbs — each dispatched via the manifest's actions[]:
 #
-#   1. Event listener (JIN_EVENT=status_changed) — keeps at most one pending
-#      notification per session (task-complete / permission), drops the entry
-#      when the session transitions to "thinking" (someone is attending it),
-#      and fires a desktop notification whose click focuses the session.
-#   2. Action (JIN_EVENT=action, from `jin plugin run jind-ai-notifier`) — opens a tmux
+#   1. `notifier.sh listen` — event listener (schema-v2 `listener: true`
+#      action, subscribes to status_changed via manifest `on:`). Keeps at
+#      most one pending notification per session (task-complete /
+#      permission), drops the entry when the session transitions to
+#      "thinking" (someone is attending it), and fires a desktop
+#      notification whose click focuses the session. Hidden from the
+#      palette / help / completion — never surfaced as a manual action.
+#   2. `notifier.sh list` — user-invoked action (default). Opens a tmux
 #      popup over the caller's own pane listing sessions with pending
 #      notifications; picking one focuses it and consumes the entry.
-#   3. Inner list UI (`notifier.sh --list <stock-file>`) — what runs inside the
-#      popup. tmux spawns it fresh, so it inherits NO JIN_* env vars;
+#   3. `notifier.sh --list <stock-file>` — inner list UI that runs inside
+#      the popup. tmux spawns it fresh, so it inherits NO JIN_* env vars;
 #      everything it needs travels on its command line (see mode_action).
 #
 # Conventions worth copying into your own plugin:
@@ -21,6 +24,9 @@
 #   - Fail open everywhere: a lost lock, a missing notify-send, a dead session
 #     — log to stderr and exit 0. No notification is worth blocking a
 #     session's status pipeline.
+#   - Split event listeners from user-facing actions in the manifest
+#     (`listener: true`). One script can still handle both — just dispatch
+#     on argv, as this main() does.
 
 set -u
 
@@ -348,10 +354,22 @@ main() {
     mode_list "$@"
     return
   fi
-  case "${JIN_EVENT:-}" in
-    action)         mode_action ;;
-    status_changed) mode_listener ;;
-    *)              return 0 ;; # unknown events: ignore (compat contract)
+  # Manifest v2 actions[] pass one of the action verbs as argv[1]. When
+  # invoked bare (dev shells, tests, or an older jin binary that predates
+  # schema v2 and used this script as a raw entrypoint), fall back to a
+  # JIN_EVENT-based dispatch so the same script still does something
+  # meaningful.
+  case "${1:-}" in
+    list)   mode_action ;;
+    listen) mode_listener ;;
+    "")
+      case "${JIN_EVENT:-}" in
+        status_changed) mode_listener ;;
+        action)         mode_action ;;
+        *)              return 0 ;;
+      esac
+      ;;
+    *) return 0 ;; # unknown verbs: ignore (compat contract)
   esac
 }
 

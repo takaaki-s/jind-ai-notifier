@@ -1,37 +1,53 @@
-schema_version: 1
+schema_version: 2
 
 # `name` is the registry-unique identifier for this plugin. It doubles as the
 # directory jind-ai installs it under and the verb for `jin plugin run <name>`,
 # so it must match on all three axes — pick a globally unique, hyphenated name.
 name: jind-ai-notifier
 
-version: 0.3.0
+version: 0.4.0
 description: Desktop notifications and pending-work popup for jin sessions
 license: MIT
 homepage: https://github.com/takaaki-s/jind-ai-notifier
 
-# Optional build is omitted: notifier.sh ships in the repo and is the entrypoint
-# directly. The runtime dispatcher exec's this path on every event.
-jin: ">=0.7.1"
-install:
-  source:
-    entrypoint: ./notifier.sh
+# The plugin uses `actions[].listener` — a jin 0.8.0 feature that hides the
+# event-only action from the palette / completion.
+jin: ">=0.8.0"
 
-# Subscribe to every status transition and filter inside the script: the
-# interesting axis is JIN_NOTIFY_KIND (task-complete / permission), which
-# matchers cannot express. Action runs (`jin plugin run jind-ai-notifier`)
-# bypass matchers entirely.
-on: ["status_changed"]
+# notifier.sh ships in the repo and is the entrypoint directly. Each action
+# calls the same script with a different argv verb. Under schema v2 the
+# per-action entrypoint declaration replaces the v1 top-level
+# `install.source.entrypoint`.
+install:
+  source: {}
 
 # `notify-send -A` blocks until the desktop notification is clicked or closed,
 # which routinely exceeds the 30s default. A run SIGTERM'd at 90s only loses
-# the click-to-focus convenience — the stock file was already updated.
+# the click-to-focus convenience — the stock file was already updated. This
+# top-level timeout applies to every action; per-action overrides are a
+# follow-up on the jin side.
 timeout: 90s
 
-# Preferred popup size as percentages of the terminal (1-100 each). The list
-# of pending sessions is short and reads well in a 70x60 area; users can
-# override this in their jin config under `popups.plugins.jind-ai-notifier`
-# — see the Customization section in README.md.
-popup:
-  width: 70
-  height: 60
+actions:
+  # Default action (actions[0]) — what `jin plugin run jind-ai-notifier` runs
+  # and what tmux keybindings should target. Opens the pending-sessions popup.
+  - id: list
+    entrypoint: ./notifier.sh list
+    label: "Show pending sessions"
+    # Preferred popup size as percentages of the terminal (1-100 each). Users
+    # override this under `popups.plugins.jind-ai-notifier` in their jin config
+    # — see the Customization section in README.md.
+    popup:
+      width: 70
+      height: 60
+
+  # Event-only listener — matches every status_changed transition and filters
+  # inside the script on JIN_NOTIFY_KIND (matchers cannot express that axis).
+  # `listener: true` hides the action from the palette / help / completion so
+  # a user browsing them does not see an entry that has no manual-invoke
+  # semantics; direct debug invocation via
+  # `jin plugin run jind-ai-notifier listen` still works.
+  - id: listen
+    entrypoint: ./notifier.sh listen
+    on: ["status_changed"]
+    listener: true
